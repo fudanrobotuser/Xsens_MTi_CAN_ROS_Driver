@@ -17,6 +17,7 @@ time_option: "mti_utc"
 # Message publishers
 pub_imu: true
 pub_quaternion: true
+pub_euler: true
 pub_mag: true
 pub_angular_velocity: true
 pub_acceleration: true

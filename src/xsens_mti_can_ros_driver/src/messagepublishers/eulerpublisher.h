@@ -30,8 +30,8 @@
 //  ARBITRATORS APPOINTED IN ACCORDANCE WITH SAID RULES.
 //  
 
-#ifndef ORIENTATIONPUBLISHER_H
-#define ORIENTATIONPUBLISHER_H
+#ifndef EULERPUBLISHER_H
+#define EULERPUBLISHER_H
 
 #include "packetcallback.h"
 #include <geometry_msgs/QuaternionStamped.h>
@@ -40,58 +40,40 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <ros/ros.h>
 
-struct OrientationPublisher : public PacketCallback
+struct EulerPublisher : public PacketCallback
 {
     ros::Publisher pub;
     ros::Publisher pub2;
     std::string frame_id = DEFAULT_FRAME_ID;
 
 
-    OrientationPublisher(ros::NodeHandle &node)
+    EulerPublisher(ros::NodeHandle &node)
     {
         int pub_queue_size = 5;
         ros::param::get("~publisher_queue_size", pub_queue_size);
-        pub = node.advertise<geometry_msgs::QuaternionStamped>("filter/quaternion", pub_queue_size);
-        pub2 = node.advertise<geometry_msgs::QuaternionStamped>("filter/mashihao", pub_queue_size);
+        pub = node.advertise<geometry_msgs::Vector3Stamped>("filter/euler", pub_queue_size);
         ros::param::get("~frame_id", frame_id);
     }
 
     void operator()(const XsDataPacket &packet, ros::Time timestamp)
     {
-        if (packet.containsXsQuaternion)
+        if (packet.containsXsEuler)
         {
-            geometry_msgs::QuaternionStamped msg;
+ 
             geometry_msgs::Vector3Stamped euler_msg;
 
-            msg.header.stamp = timestamp;
-            msg.header.frame_id = frame_id;
+            euler_msg.header.stamp = timestamp;
+            euler_msg.header.frame_id = frame_id;
 
-            XsQuaternion q = packet.quaternion;
 
-            msg.quaternion.w = q.q0;
-            msg.quaternion.x = q.q1;
-            msg.quaternion.y = q.q2;
-            msg.quaternion.z = q.q3;
+            euler_msg.vector.x = packet.euler.roll;
+            euler_msg.vector.y = packet.euler.pitch;
+            euler_msg.vector.z = packet.euler.yaw;
 
-            // ����Ԫ��ת��Ϊtf2::Quaternion
-            tf2::Quaternion tf_quat(q.q1, q.q2, q.q3, q.q0);
-            tf2::Matrix3x3 tf_mat(tf_quat);
 
-            // ����Ԫ��ת��Ϊŷ����
-            double roll, pitch, yaw;
-            tf_mat.getRPY(roll, pitch, yaw);
 
-            // ���ŷ������Ϣ
-            euler_msg.vector.x = roll;
-            euler_msg.vector.y = pitch;
-            euler_msg.vector.z = yaw;
-
-            // ����ŷ������Ϣ
-            pub2.publish(euler_msg);
-
-            pub.publish(msg);
+            pub.publish(euler_msg);
             
-            // ROS_INFO("Published euler angles: roll=%f, pitch=%f, yaw=%f", roll, pitch, yaw);
             // ROS_INFO("Published euler angles: roll=%f, pitch=%f, yaw=%f", packet.euler.roll, packet.euler.pitch, packet.euler.yaw);
         }
     }

@@ -14,6 +14,7 @@
 #include "messagepublishers/magneticfieldpublisher.h"
 #include "messagepublishers/orientationincrementspublisher.h"
 #include "messagepublishers/orientationpublisher.h"
+#include "messagepublishers/eulerpublisher.h"
 #include "messagepublishers/packetcallback.h"
 #include "messagepublishers/positionllapublisher.h"
 #include "messagepublishers/pressurepublisher.h"
@@ -60,7 +61,7 @@ void XsCanInterface::initialize()
     socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     struct ifreq ifr;
     //TODO: add to yaml
-    strcpy(ifr.ifr_name, "can0"); // Assuming you're using can0 interface
+    strcpy(ifr.ifr_name, "can1"); // Assuming you're using can0 interface
     ioctl(socket_, SIOCGIFINDEX, &ifr);
 
     struct sockaddr_can addr;
@@ -87,6 +88,10 @@ void XsCanInterface::registerPublishers(ros::NodeHandle &node)
 	{
 		registerCallback(new OrientationPublisher(node));
 	}
+	if (ros::param::get("~pub_euler", should_publish) && should_publish)
+	{
+		registerCallback(new EulerPublisher(node));
+	}    
 	if (ros::param::get("~pub_acceleration", should_publish) && should_publish)
 	{
 		registerCallback(new AccelerationPublisher(node));
